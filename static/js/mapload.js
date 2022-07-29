@@ -52,17 +52,19 @@ map.on('click', function (e) {
   
 });
 
-markers = [];
 function updateMarker(id, m_lon, m_lat) {
   marker_id = -1;
-  for(i=0; i<markers.length; i++) {
-    if(markers[i] == id) {
+  for (i=0; i<markerlayer.getSource().getFeatures().length; i++) {
+    const feature = markerlayer.getSource().getFeatures()[i];
+    if(feature.get('name') == id) {
       marker_id = i;
       break;
     }
   }
   if(marker_id >= 0) {
-    markerlayer.getSource().getFeatures()[marker_id].getGeometry().setCoordinates(ol.proj.fromLonLat([m_lon, m_lat]));
+    const feature = markerlayer.getSource().getFeatures()[marker_id];
+    feature.set("description", `lat: ${m_lat}, long: ${m_lon}`);
+    feature.getGeometry().setCoordinates(ol.proj.fromLonLat([m_lon, m_lat]));
   } else {
     const iconFeature = new ol.Feature({
       geometry: new ol.geom.Point(ol.proj.fromLonLat([m_lon, m_lat])),
@@ -71,7 +73,6 @@ function updateMarker(id, m_lon, m_lat) {
     });
     iconFeature.setStyle(iconStyle);
     markerlayer.getSource().addFeature(iconFeature);
-    markers.push(id);
   }
 }
 
