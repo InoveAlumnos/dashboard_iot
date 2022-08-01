@@ -53,6 +53,11 @@ const m2 = document.querySelector("#sM2");
 const m3 = document.querySelector("#sM3");
 const m4 = document.querySelector("#sM4");
 
+m1.disabled = true;
+m2.disabled = true;
+m3.disabled = true;
+m4.disabled = true;
+
 // --- Funciones de ayuda ----
 function updateEngineState(state) {
     if(state == true) {
@@ -230,32 +235,32 @@ function onMessageArrived(message) {
     else if(message.destinationName == `${topicBase}/actuadores/motores/1`) {
         if(data.volar == true) {
             const val = Number(msg);
-            data.motores[0] = msg;
-            m1.checked = msg;
+            data.motores[0] = val;
+            m1.checked = val;
             update();
         }
     }
     else if(message.destinationName == `${topicBase}/actuadores/motores/2`) {
         if(data.volar == true) {
             const val = Number(msg);
-            data.motores[1] = msg;
-            m2.checked = msg;
+            data.motores[1] = val;
+            m2.checked = val;
             update();
         }
     }
     else if(message.destinationName == `${topicBase}/actuadores/motores/3`) {
         if(data.volar == true) {
             const val = Number(msg);
-            data.motores[2] = msg;
-            m3.checked = msg;
+            data.motores[2] = val;
+            m3.checked = val;
             update();
         }
     }
     else if(message.destinationName == `${topicBase}/actuadores/motores/4`) {
         if(data.volar == true) {
             const val = Number(msg);
-            data.motores[3] = msg;
-            m4.checked = msg;
+            data.motores[3] = val;
+            m4.checked = val;
             update();
         }
     }
