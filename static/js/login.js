@@ -18,7 +18,12 @@ document.querySelector("#ingresar").onclick = async () => {
         });
     if(resp.ok) {
         window.location.href = redirect;
-    }           
+    }
+    else {
+        if(resp.status == 401) {
+            alert(`Usuario ${usuario} incorrecto`);
+        }
+    }
 }
 
 document.querySelector("#usuario").onkeypress = (e) => {
