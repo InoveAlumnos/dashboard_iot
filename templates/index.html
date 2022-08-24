@@ -6,9 +6,10 @@
   <!-- fontawesome -->
   <script src="https://kit.fontawesome.com/d604a8edc1.js" crossorigin="anonymous"></script>
   
-  <!-- Mapa -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.14.1/css/ol.css" type="text/css">
-  <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.14.1/build/ol.js"></script>
+  <!-- Mapa --> 
+  <!-- Release URL 6.14.1 https://github.com/openlayers/openlayers/releases/ -->
+  <script src="{{ url_for('static', filename='js/openlayers_614/ol.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/openlayers_614/ol.css') }}">
 
   <!-- Styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
