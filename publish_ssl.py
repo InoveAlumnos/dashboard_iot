@@ -2,6 +2,8 @@ import sys
 import paho.mqtt.client as mqtt
 import time
 
+# http://www.steves-internet-guide.com/mosquitto-tls/
+
 def on_connect(mqttc, obj, flags, rc):
     print("rc: "+str(rc))
 

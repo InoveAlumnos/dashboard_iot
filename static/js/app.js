@@ -9,6 +9,8 @@ let data = {
     monitoreo: {temp: 0, ram:0, cpu:0}   
 }
 
+let keepAlive = {};
+
 let chartReady = false;
 const dataMaxLen = 50;
 const headingTime = new Array(dataMaxLen);
@@ -192,6 +194,36 @@ m4.onchange = (e) => {
     sendActuadorUpdate("motores");
 }
 
+// ---- Update users ----
+//let obj = {"you": 100, "me": 75, "foo": 116, "bar": 15};
+(function my_func() {
+    if(Object.keys(keepAlive).length > 0) {
+        let entries = Object.entries(keepAlive);
+        const sorted = entries.sort((a, b) => a[1] - b[1]).reverse();
+
+        let accumulator = ""
+        for(const user of sorted){
+            accumulator+=    
+            `
+            <div class=row>
+                ${user[0]} ${user[1]}
+            </div>
+            `
+        };
+
+        const section = document.querySelector("#usersList");
+        section.innerHTML = accumulator;
+    }
+    if (socket_connected == true){
+        message = new Paho.MQTT.Message("1");
+        message.destinationName = `${topicBase}/keepalive/request`;
+        client.send(message);
+    }
+    setTimeout( my_func, 1000 );
+})();
+
+
+
 // ---- MQTT Websockets ----
 const client = new Paho.MQTT.Client("23.92.69.190", 9001, "clientId_" + mqttuser);
 
@@ -202,6 +234,7 @@ function onConnect() {
     socket_connected = true;
     client.subscribe(`${topicBase}/#`);
     client.subscribe(`${dashboard_topic}/+/sensores/gps`);
+    client.subscribe(`${dashboard_topic}/+/keepalive/ack`);
 }
 
 function doFail(e) {
@@ -286,9 +319,17 @@ function onMessageArrived(message) {
         const user = message.destinationName.split("/")[1];
         updateMarker(user, longitude, latitude);
     }
+    else if(message.destinationName.includes('keepalive/ack')) {
+        const user = message.destinationName.split("/")[1];
+        if(! keepAlive.hasOwnProperty(user)) {
+            keepAlive[user] = 0;
+        }
+        keepAlive[user]++;
+    }
     else {
         console.log("Tópico no soportado: "+ message.destinationName);
     }
+
 }
 
 client.onConnectionLost = onConnectionLost;
