@@ -326,6 +326,9 @@ function onMessageArrived(message) {
         }
         keepAlive[user]++;
     }
+    else if(message.destinationName.includes('keepalive/request')) {
+        // no hacer nada
+    }
     else {
         console.log("Tópico no soportado: "+ message.destinationName);
     }
