@@ -6,7 +6,7 @@ let data = {
     joystick: {x: 0, y: 0},
     inerciales: {heading: 0, accel: 0},
     gps: {latitude: -34.55, longitude: -58.496},
-    monitoreo: {temp: 0, ram:0, cpu:0}   
+    monitoreo: {cpu:0, ram:0, disk: 0, temp: 0, uptime: 0}
 }
 
 let keepAlive = {};
@@ -17,6 +17,8 @@ const headingTime = new Array(dataMaxLen);
 const headingData = new Array(dataMaxLen);
 const accelTime = new Array(dataMaxLen);
 const accelData = new Array(dataMaxLen);
+
+const monitoreoData = [0,0,0,0];
 
 function addData(time, data, bufferTime, bufferData) {
     bufferTime.push(time);
@@ -298,12 +300,12 @@ function onMessageArrived(message) {
         }
     }
     else if(message.destinationName == `${topicBase}/sensores/joystick`) {
-        const joystick = JSON.parse(msg)
+        const joystick = JSON.parse(msg);
         data.joystick = joystick;
         rotate();
     }
     else if(message.destinationName == `${topicBase}/sensores/inerciales`) {
-        const inerciales = JSON.parse(msg)
+        const inerciales = JSON.parse(msg);
         data.inerciales.heading = Number(inerciales["heading"]);
         data.inerciales.accel = Number(inerciales["accel"]);
         const idx = headingTime[headingTime.length - 1]
@@ -313,11 +315,22 @@ function onMessageArrived(message) {
         rotate();
     }
     else if(message.destinationName.includes(`/sensores/gps`)) {
-        const gps = JSON.parse(msg)
+        const gps = JSON.parse(msg);
         const latitude = Number(gps["latitude"]);
         const longitude = Number(gps["longitude"]);
         const user = message.destinationName.split("/")[1];
         updateMarker(user, longitude, latitude);
+    }
+    else if(message.destinationName.includes(`/sensores/monitoreo`)) {
+        const monitoreo = JSON.parse(msg);
+        data.monitoreo = monitoreo;
+        monitoreoData[0] = data.monitoreo.cpu;
+        monitoreoData[1] =  data.monitoreo.ram;
+        monitoreoData[2] =  data.monitoreo.disk;
+        monitoreoData[3] =  data.monitoreo.temp;
+        if(chartReady == true) {
+            monitoreoChart.update();
+        }
     }
     else if(message.destinationName.includes('keepalive/ack')) {
         const user = message.destinationName.split("/")[1];

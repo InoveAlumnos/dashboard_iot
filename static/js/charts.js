@@ -99,4 +99,57 @@ ctx2,
     options: chartOptions2,
 });
 
+// Monitoreo Radar
+const chartRadarData = {
+    labels: [
+        'CPU',
+        'RAM',
+        'DISK',
+        'TEMP',
+      ],
+    datasets: [
+        {
+        label: 'Monitoreo',
+        data: [0, 0, 0, 0],
+        fill: true,
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgb(54, 162, 235)',
+        pointBackgroundColor: 'rgb(54, 162, 235)',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: 'rgb(54, 162, 235)'
+        }
+    ]
+};
+
+const chartRadarOptions = {
+    elements: {
+        line: {
+          borderWidth: 3
+        }
+    },
+    scales: {
+        r: {
+            angleLines: {
+                display: false
+            },
+            suggestedMin: 50,
+            suggestedMax: 100
+        }
+    }
+};
+
+chartRadarData.datasets[0].data = monitoreoData;
+
+// Get the context of the canvas element we want to select
+const radarctx = document.getElementById('monitoreoChart').getContext('2d');
+const monitoreoChart = new Chart(
+radarctx,
+{
+    type: 'radar',
+    data: chartRadarData,
+    options: chartOptions,
+});
+
+
 chartReady = true;
