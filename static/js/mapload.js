@@ -26,10 +26,25 @@ const iconStyle = new ol.style.Style({
       anchor: [0.5, 1],
       anchorXUnits: 'fraction',
       anchorYUnits: 'fraction',
-      src: 'http://www.openstreetmap.org/openlayers/img/marker.png',
+      //src: 'http://www.openstreetmap.org/openlayers/img/marker.png',
+      src: '/static/images/marker-red.png',
       //src: 'dron_yellow_25.png',
     }),
 });
+
+function createIconStyle(color) {
+  const iconStyle = new ol.style.Style({
+    image: new ol.style.Icon({
+      anchor: [0.5, 1],
+      anchorXUnits: 'fraction',
+      anchorYUnits: 'fraction',
+      //src: 'http://www.openstreetmap.org/openlayers/img/marker.png',
+      src: `/static/images/marker-${color}.png`,
+      //src: 'dron_yellow_25.png',
+    }),
+  });
+  return iconStyle;
+}
 
 const element = document.getElementById('popup');
 
@@ -52,7 +67,9 @@ map.on('click', function (e) {
   
 });
 
-function updateMarker(id, m_lon, m_lat) {
+markers = {};
+
+function updateMarker(id, m_lon, m_lat, color, description) {
   marker_id = -1;
   for (i=0; i<markerlayer.getSource().getFeatures().length; i++) {
     const feature = markerlayer.getSource().getFeatures()[i];
@@ -63,16 +80,35 @@ function updateMarker(id, m_lon, m_lat) {
   }
   if(marker_id >= 0) {
     const feature = markerlayer.getSource().getFeatures()[marker_id];
-    feature.set("description", `lat: ${m_lat}, long: ${m_lon}`);
+    marker = markers[id]
+    if(marker != null) {
+      if(marker["color"] != color) {
+        // Si cambio el color, actualizo el estilo
+        const iconStyle = createIconStyle(color);
+        feature.setStyle(iconStyle);
+        marker["color"] = color;
+      }
+      if(marker["description"] != description) {
+        feature.set("description", description);
+        marker["description"] = description;
+      }
+    }   
+    //feature.set("description", `lat: ${m_lat}, long: ${m_lon}`);
     feature.getGeometry().setCoordinates(ol.proj.fromLonLat([m_lon, m_lat]));
   } else {
-    const iconFeature = new ol.Feature({
+    if(description == "") {
+      description = `lat: ${m_lat}, long: ${m_lon}`;
+    }
+    const feature = new ol.Feature({
       geometry: new ol.geom.Point(ol.proj.fromLonLat([m_lon, m_lat])),
       name: id,
-      description: `lat: ${m_lat}, long: ${m_lon}`,
+      description: description,
     });
-    iconFeature.setStyle(iconStyle);
-    markerlayer.getSource().addFeature(iconFeature);
+    const iconStyle = createIconStyle(color);
+    feature.setStyle(iconStyle);
+    markerlayer.getSource().addFeature(feature);
+    // Save marker
+    markers[id] = {"color": color, "description": description};
   }
 }
 

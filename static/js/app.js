@@ -10,6 +10,7 @@ let data = {
 }
 
 let keepAlive = {};
+let userConfig = {};
 
 let chartReady = false;
 const dataMaxLen = 50;
@@ -220,6 +221,10 @@ m4.onchange = (e) => {
         message = new Paho.MQTT.Message("1");
         message.destinationName = `${topicBase}/keepalive/request`;
         client.send(message);
+
+        message = new Paho.MQTT.Message("1");
+        message.destinationName = `${topicBase}/config/request`;
+        client.send(message);
     }
     setTimeout( my_func, 1000 );
 })();
@@ -237,6 +242,7 @@ function onConnect() {
     client.subscribe(`${topicBase}/#`);
     client.subscribe(`${dashboard_topic}/+/sensores/gps`);
     client.subscribe(`${dashboard_topic}/+/keepalive/ack`);
+    client.subscribe(`${dashboard_topic}/+/config/ack`);
 }
 
 function doFail(e) {
@@ -255,97 +261,120 @@ function onConnectionLost(responseObject) {
 function onMessageArrived(message) {
     //console.log("onMessageArrived: " + message.destinationName + "  "+ message.payloadString);
     const msg = message.payloadString;
-    if(message.destinationName == `${topicBase}/actuadores/luces/1`) {
-        const val = Number(msg);
-        data.luz = val;
-        light.style.opacity = val;
-        slight.checked = val;
-    }
-    else if(message.destinationName == `${topicBase}/actuadores/volar`) {
-        const val = Number(msg);
-        sengine.checked = val;
-        updateEngineState(val);
-        update();
-    }
-    else if(message.destinationName == `${topicBase}/actuadores/motores/1`) {
-        if(data.volar == true) {
+    try {
+        if(message.destinationName == `${topicBase}/actuadores/luces/1`) {
             const val = Number(msg);
-            data.motores[0] = val;
-            m1.checked = val;
+            data.luz = val;
+            light.style.opacity = val;
+            slight.checked = val;
+        }
+        else if(message.destinationName == `${topicBase}/actuadores/volar`) {
+            const val = Number(msg);
+            sengine.checked = val;
+            updateEngineState(val);
             update();
         }
-    }
-    else if(message.destinationName == `${topicBase}/actuadores/motores/2`) {
-        if(data.volar == true) {
-            const val = Number(msg);
-            data.motores[1] = val;
-            m2.checked = val;
-            update();
+        else if(message.destinationName == `${topicBase}/actuadores/motores/1`) {
+            if(data.volar == true) {
+                const val = Number(msg);
+                data.motores[0] = val;
+                m1.checked = val;
+                update();
+            }
+        }
+        else if(message.destinationName == `${topicBase}/actuadores/motores/2`) {
+            if(data.volar == true) {
+                const val = Number(msg);
+                data.motores[1] = val;
+                m2.checked = val;
+                update();
+            }
+        }
+        else if(message.destinationName == `${topicBase}/actuadores/motores/3`) {
+            if(data.volar == true) {
+                const val = Number(msg);
+                data.motores[2] = val;
+                m3.checked = val;
+                update();
+            }
+        }
+        else if(message.destinationName == `${topicBase}/actuadores/motores/4`) {
+            if(data.volar == true) {
+                const val = Number(msg);
+                data.motores[3] = val;
+                m4.checked = val;
+                update();
+            }
+        }
+        else if(message.destinationName == `${topicBase}/sensores/joystick`) {
+            const joystick = JSON.parse(msg);
+            data.joystick = joystick;
+            rotate();
+        }
+        else if(message.destinationName == `${topicBase}/sensores/inerciales`) {
+            const inerciales = JSON.parse(msg);
+            data.inerciales.heading = Number(inerciales["heading"]);
+            data.inerciales.accel = Number(inerciales["accel"]);
+            const idx = headingTime[headingTime.length - 1]
+            addData(idx+1, data.inerciales.heading, headingTime, headingData);
+            const idx2 = accelTime[accelTime.length - 1]
+            addData(idx2+1, data.inerciales.accel, accelTime, accelData);
+            rotate();
+        }
+        else if(message.destinationName.includes(`/sensores/gps`)) {
+            const gps = JSON.parse(msg);
+            const latitude = Number(gps["latitude"]);
+            const longitude = Number(gps["longitude"]);
+            const user = message.destinationName.split("/")[1];
+            if ((user in userConfig)==false) {
+                userConfig[user] = {"color": "red", "description": ""};
+            }
+            updateMarker(user, longitude, latitude, userConfig[user]["color"], userConfig[user]["description"]);
+        }
+        else if(message.destinationName.includes(`/sensores/monitoreo`)) {
+            const monitoreo = JSON.parse(msg);
+            data.monitoreo = monitoreo;
+            monitoreoData[0] = data.monitoreo.cpu;
+            monitoreoData[1] =  data.monitoreo.ram;
+            monitoreoData[2] =  data.monitoreo.disk;
+            monitoreoData[3] =  data.monitoreo.temp;
+            if(chartReady == true) {
+                monitoreoChart.update();
+            }
+        }
+        else if(message.destinationName.includes('keepalive/ack')) {
+            const user = message.destinationName.split("/")[1];
+            if(! keepAlive.hasOwnProperty(user)) {
+                keepAlive[user] = 0;
+            }
+            keepAlive[user]++;
+        }
+        else if(message.destinationName.includes('keepalive/request')) {
+            // no hacer nada
+        }
+        else if(message.destinationName.includes('config/ack')) {
+            const config = JSON.parse(msg);
+            const color = config["color"];
+            const description = config["description"];
+            if((color != null) && (description != null)) {
+                const user = message.destinationName.split("/")[1];
+                if ((user in userConfig)==false) {
+                    userConfig[user] = {"color": "red", "description": ""};
+                }
+                userConfig[user]["color"] = color;
+                userConfig[user]["description"] = description;
+            }
+        }
+        else if(message.destinationName.includes('config/request')) {
+            // no hacer nada
+        }
+        else {
+            console.log("Tópico no soportado: "+ message.destinationName);
         }
     }
-    else if(message.destinationName == `${topicBase}/actuadores/motores/3`) {
-        if(data.volar == true) {
-            const val = Number(msg);
-            data.motores[2] = val;
-            m3.checked = val;
-            update();
-        }
+    catch (e){
+        console.log(e);
     }
-    else if(message.destinationName == `${topicBase}/actuadores/motores/4`) {
-        if(data.volar == true) {
-            const val = Number(msg);
-            data.motores[3] = val;
-            m4.checked = val;
-            update();
-        }
-    }
-    else if(message.destinationName == `${topicBase}/sensores/joystick`) {
-        const joystick = JSON.parse(msg);
-        data.joystick = joystick;
-        rotate();
-    }
-    else if(message.destinationName == `${topicBase}/sensores/inerciales`) {
-        const inerciales = JSON.parse(msg);
-        data.inerciales.heading = Number(inerciales["heading"]);
-        data.inerciales.accel = Number(inerciales["accel"]);
-        const idx = headingTime[headingTime.length - 1]
-        addData(idx+1, data.inerciales.heading, headingTime, headingData);
-        const idx2 = accelTime[accelTime.length - 1]
-        addData(idx2+1, data.inerciales.accel, accelTime, accelData);
-        rotate();
-    }
-    else if(message.destinationName.includes(`/sensores/gps`)) {
-        const gps = JSON.parse(msg);
-        const latitude = Number(gps["latitude"]);
-        const longitude = Number(gps["longitude"]);
-        const user = message.destinationName.split("/")[1];
-        updateMarker(user, longitude, latitude);
-    }
-    else if(message.destinationName.includes(`/sensores/monitoreo`)) {
-        const monitoreo = JSON.parse(msg);
-        data.monitoreo = monitoreo;
-        monitoreoData[0] = data.monitoreo.cpu;
-        monitoreoData[1] =  data.monitoreo.ram;
-        monitoreoData[2] =  data.monitoreo.disk;
-        monitoreoData[3] =  data.monitoreo.temp;
-        if(chartReady == true) {
-            monitoreoChart.update();
-        }
-    }
-    else if(message.destinationName.includes('keepalive/ack')) {
-        const user = message.destinationName.split("/")[1];
-        if(! keepAlive.hasOwnProperty(user)) {
-            keepAlive[user] = 0;
-        }
-        keepAlive[user]++;
-    }
-    else if(message.destinationName.includes('keepalive/request')) {
-        // no hacer nada
-    }
-    else {
-        console.log("Tópico no soportado: "+ message.destinationName);
-    }
-
 }
 
 client.onConnectionLost = onConnectionLost;
