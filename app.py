@@ -62,12 +62,12 @@ def api_login():
             print("LOGIN_PASSWORD incorrect")
             return Response(status=401)
 
-        url = "http://23.92.69.190/administracion/usuarios/exists/"
-        payload = {"username": usuario}
-        res = requests.post(url, data=json.dumps(payload), headers={"Content-Type":"application/json"})
-        if res.status_code != 200:
-            print("USER incorrect")
-            return Response(status=401)
+        # url = "http://23.92.69.190/administracion/usuarios/exists/"
+        # payload = {"username": usuario}
+        # res = requests.post(url, data=json.dumps(payload), headers={"Content-Type":"application/json"})
+        # if res.status_code != 200:
+        #     print("USER incorrect")
+        #     return Response(status=401)
 
         session['user'] = usuario
         return Response(status=200)
